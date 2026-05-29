@@ -1,0 +1,267 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+:root {
+  --green-dark: #243a24;
+  --green: #445b38;
+  --green-light: #65764d;
+  --cream: #f3ead8;
+  --cream-dark: #dfd0b6;
+  --cream-mid: #eadcc2;
+  --brown: #7a563f;
+  --gold: #a87d36;
+  --gold-light: #c29b55;
+  --orange: #a95f38;
+  --blue: #607f86;
+  --blue-dark: #435f63;
+  --text: #2f241a;
+  --text-light: #65513d;
+  --ink-muted: #7c6a56;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: 'Lora', Georgia, serif;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(243, 234, 216, 0.88), rgba(243, 234, 216, 0.88)),
+    url('/assets/textures/paper-texture.png');
+  background-color: var(--cream);
+  background-size: auto, 420px 420px;
+  color: var(--text);
+  overflow-x: hidden;
+  font-family: 'Lora', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 16% 12%, rgba(168, 125, 54, 0.08), transparent 34%),
+    radial-gradient(circle at 86% 18%, rgba(68, 91, 56, 0.07), transparent 32%),
+    linear-gradient(90deg, rgba(122, 86, 63, 0.06), transparent 18%, transparent 82%, rgba(122, 86, 63, 0.05));
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: 'Playfair Display', 'Lora', Georgia, serif;
+  letter-spacing: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--cream-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--green);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--green-dark);
+}
+
+/* Folk art border pattern */
+.folk-border {
+  position: relative;
+}
+.folk-border::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--gold) 0px,
+    var(--gold) 8px,
+    var(--orange) 8px,
+    var(--orange) 16px,
+    var(--green) 16px,
+    var(--green) 24px,
+    var(--gold) 24px
+  );
+}
+
+.folk-border-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--gold) 0px,
+    var(--gold) 8px,
+    var(--orange) 8px,
+    var(--orange) 16px,
+    var(--green) 16px,
+    var(--green) 24px,
+    var(--gold) 24px
+  );
+}
+
+/* Decorative dot separator */
+.dot-separator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+  margin: 6px 0;
+}
+.dot-separator span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--gold);
+  display: inline-block;
+}
+.dot-separator span:nth-child(2) {
+  background: var(--green);
+  width: 6px;
+  height: 6px;
+}
+.dot-separator span:nth-child(4) {
+  background: var(--green);
+  width: 6px;
+  height: 6px;
+}
+
+/* Card hover */
+.feature-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.feature-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(122, 86, 63, 0.12), 0 1px 5px rgba(122, 86, 63, 0.08);
+}
+
+.ornamental-card {
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(255, 251, 240, 0.74), transparent 58%),
+    linear-gradient(rgba(250, 246, 236, 0.82), rgba(242, 232, 211, 0.84)),
+    url('/assets/textures/paper-texture.png');
+  background-size: auto, 360px 360px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.38),
+    0 5px 18px rgba(88, 64, 39, 0.09);
+}
+
+/* Sidebar leaf decorations */
+.sidebar-leaf {
+  position: absolute;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Animated water wave */
+@keyframes wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.wave-animate {
+  animation: wave 3s ease-in-out infinite;
+}
+
+/* Points badge pulse */
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 149, 42, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(200, 149, 42, 0); }
+}
+.points-badge {
+  animation: pulse-gold 2.5s ease-in-out infinite;
+}
+
+/* Notification badge bounce */
+@keyframes badge-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.notif-badge {
+  animation: badge-bounce 2s ease-in-out infinite;
+}
+
+/* Folk pattern background */
+.folk-pattern-bg {
+  background-image:
+    radial-gradient(circle at 20% 80%, rgba(200, 149, 42, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(61, 107, 30, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(74, 144, 184, 0.03) 0%, transparent 60%);
+}
+
+/* Smooth sidebar transitions */
+.nav-item {
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Alert item hover */
+.alert-item {
+  transition: background-color 0.15s ease;
+}
+.alert-item:hover {
+  background-color: rgba(200, 149, 42, 0.08);
+}
+
+/* Activity item hover */
+.activity-item {
+  transition: background-color 0.15s ease;
+}
+.activity-item:hover {
+  background-color: rgba(200, 149, 42, 0.06);
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .sidebar-desktop {
+    display: none;
+  }
+  .mobile-bottom-nav {
+    display: flex;
+  }
+}
+
+@media (min-width: 769px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .mobile-bottom-nav {
+    display: none;
+  }
+}
+
+/* Gradient overlays for hero */
+.hero-gradient {
+  background: linear-gradient(
+    135deg,
+    rgba(61, 107, 30, 0.08) 0%,
+    rgba(74, 144, 184, 0.12) 50%,
+    rgba(200, 149, 42, 0.06) 100%
+  );
+}
