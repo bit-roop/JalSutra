@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChangeEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
@@ -20,10 +20,12 @@ import {
   Trophy,
   UploadCloud,
   Users,
+  X,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import OrnamentalCard from "@/components/OrnamentalCard";
 import { missions } from "@/lib/missions";
+import type { CreateImpactSubmissionResponse } from "@/lib/impact-submissions";
 
 type MissionDetailPageProps = {
   params: {
@@ -32,9 +34,9 @@ type MissionDetailPageProps = {
 };
 
 const howToItems = [
-  "Use an earthen pot (matka) with a small opening (3-4 cm diameter).",
+  "Use an earthen pot (matka) with a small opening (3–4 cm diameter).",
   "Make two small holes on opposite sides near the top and pass a wire or rope.",
-  "Hang it 10-12 feet high in a quiet place.",
+  "Hang it 10–12 feet high in a quiet place.",
   "Ensure it is shaded and away from predators.",
   "Do not disturb the nest once occupied.",
 ];
@@ -108,31 +110,84 @@ const achievements = [
 export default function MissionDetailPage({ params }: MissionDetailPageProps) {
   const mission = missions.find((item) => item.id === params.id);
   const [joined, setJoined] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [impactModalOpen, setImpactModalOpen] = useState(false);
+  const [impactImage, setImpactImage] = useState<File | null>(null);
+  const [impactPreview, setImpactPreview] = useState<string | null>(null);
+  const [caption, setCaption] = useState("");
+  const [description, setDescription] = useState("");
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [submitMessage, setSubmitMessage] = useState("");
 
   const participants = (mission?.participants ?? 0) + (joined ? 1 : 0);
   const goal = 2000;
   const remaining = goal - participants;
   const progress = Math.min((participants / goal) * 100, 100);
 
-  const previewUrl = useMemo(() => preview, [preview]);
+  const impactPreviewUrl = useMemo(() => impactPreview, [impactPreview]);
 
   if (!mission || mission.id !== "sparrow") {
     notFound();
   }
 
-  function handleImageSelect(event: ChangeEvent<HTMLInputElement>) {
+  function handleImpactImageSelect(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
     if (!file) {
       return;
     }
 
-    if (preview) {
-      URL.revokeObjectURL(preview);
+    if (impactPreview) {
+      URL.revokeObjectURL(impactPreview);
     }
 
-    setPreview(URL.createObjectURL(file));
+    setImpactImage(file);
+    setImpactPreview(URL.createObjectURL(file));
+    setSubmitStatus("idle");
+    setSubmitMessage("");
+  }
+
+  async function handleImpactSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!impactImage) {
+      setSubmitStatus("error");
+      setSubmitMessage("Please select an image.");
+      return;
+    }
+
+    setSubmitStatus("submitting");
+    setSubmitMessage("");
+
+    const formData = new FormData();
+    formData.append("mission_id", "sparrow");
+    formData.append("caption", caption);
+    formData.append("description", description);
+    formData.append("file", impactImage);
+
+    try {
+      const response = await fetch("/api/impact-submissions", {
+        method: "POST",
+        body: formData,
+      });
+      const result = (await response.json()) as Partial<CreateImpactSubmissionResponse> & { error?: string };
+
+      if (!response.ok) {
+        throw new Error(result.error ?? "Failed to submit your impact.");
+      }
+
+      setSubmitStatus("success");
+      setSubmitMessage("Impact shared successfully.");
+      setCaption("");
+      setDescription("");
+      setImpactImage(null);
+      if (impactPreview) {
+        URL.revokeObjectURL(impactPreview);
+      }
+      setImpactPreview(null);
+    } catch (error) {
+      setSubmitStatus("error");
+      setSubmitMessage(error instanceof Error ? error.message : "Failed to submit your impact.");
+    }
   }
 
   return (
@@ -152,7 +207,9 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
                 <ArrowLeft size={20} />
               </Link>
               <h1 className="text-sm font-bold text-js-text">Mission Details</h1>
-              <UploadCloud size={19} className="text-js-text" />
+              <a href="#share-impact" className="flex h-8 w-8 items-center justify-center text-js-text" aria-label="Share your impact">
+                <UploadCloud size={19} />
+              </a>
             </div>
 
             <OrnamentalCard className="overflow-visible" innerClassName="p-0 md:p-6" accent="sun" ornament="none">
@@ -163,6 +220,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
                   width={1050}
                   height={350}
                   priority
+                  unoptimized
                   className="h-[212px] w-full object-cover md:h-[290px]"
                 />
                 <div className="pointer-events-none absolute left-0 top-0 hidden h-28 w-28 rounded-br-full border-b border-r border-[#fff7df]/60 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.30),transparent_68%)] md:block" />
@@ -274,7 +332,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
                   )}
                 </button>
 
-                <section className="mt-4 rounded-xl border border-dashed border-js-green/55 bg-[#f8f2de]/72 p-4">
+                <section id="share-impact" className="mt-4 rounded-xl border border-dashed border-js-green/55 bg-[#f8f2de]/72 p-4">
                   <div className="grid gap-4 md:grid-cols-[72px_minmax(0,1fr)_180px] md:items-center">
                     <span className="hidden h-16 w-16 items-center justify-center rounded-xl bg-js-green text-[#fff8df] md:flex">
                       <CloudUpload size={38} />
@@ -285,17 +343,19 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
                         Upload a photo of your earthen nest and inspire others. Let's build a community of change!
                       </p>
                     </div>
-                    <label className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-js-green bg-[#fffaf0] px-4 font-bold text-js-green-dark">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImpactModalOpen(true);
+                        setSubmitStatus("idle");
+                        setSubmitMessage("");
+                      }}
+                      className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-js-green bg-[#fffaf0] px-4 font-bold text-js-green-dark"
+                    >
                       <CloudUpload size={22} />
                       Upload Now
-                      <input type="file" accept="image/*" className="sr-only" onChange={handleImageSelect} />
-                    </label>
+                    </button>
                   </div>
-                  {previewUrl ? (
-                    <div className="relative mt-4 h-44 overflow-hidden rounded-lg border border-js-gold/30 md:h-60">
-                      <img src={previewUrl} alt="Selected earthen nest preview" className="h-full w-full object-cover" />
-                    </div>
-                  ) : null}
                 </section>
               </section>
             </OrnamentalCard>
@@ -308,9 +368,9 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
                   <Bell size={28} className="text-js-green" />
                   <h2 className="font-display text-[22px] font-bold text-js-green-dark">Alerts</h2>
                 </div>
-                <button className="text-sm font-medium text-js-green" type="button">View all</button>
+                <a href="#detail-alerts" className="text-sm font-medium text-js-green">View all</a>
               </div>
-              <div className="space-y-3">
+              <div id="detail-alerts" className="space-y-3">
                 {alerts.map(({ title, body, meta, icon: Icon, bg }) => (
                   <div key={title} className="rounded-xl border border-js-gold/25 bg-[#fffaf0]/62 p-4">
                     <div className="flex gap-4">
@@ -337,9 +397,9 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
                   <Star size={29} className="text-js-green" />
                   <h2 className="font-display text-[22px] font-bold text-js-green-dark">Achievements</h2>
                 </div>
-                <button className="text-sm font-medium text-js-green" type="button">View all</button>
+                <a href="#detail-achievements" className="text-sm font-medium text-js-green">View all</a>
               </div>
-              <div className="space-y-3">
+              <div id="detail-achievements" className="space-y-3">
                 {achievements.map(({ title, body, meta, icon: Icon, done }) => (
                   <div key={title} className="rounded-xl border border-js-gold/25 bg-[#fffaf0]/62 p-3">
                     <div className="flex items-center gap-3">
@@ -369,6 +429,89 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
           </aside>
         </div>
       </div>
+
+      {impactModalOpen ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#1e160d]/45 px-4 py-6">
+          <OrnamentalCard className="max-h-[92vh] w-full max-w-xl overflow-y-auto" accent="leaf" ornament="corners">
+            <form onSubmit={handleImpactSubmit} className="p-5">
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.12em] text-js-green">Sparrow Mission</p>
+                  <h2 className="font-display text-2xl font-bold text-js-green-dark">Share Your Impact</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setImpactModalOpen(false)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-js-gold/30 bg-[#fffaf0] text-js-text"
+                  aria-label="Close upload modal"
+                >
+                  <X size={19} />
+                </button>
+              </div>
+
+              <label className="block">
+                <span className="text-sm font-bold text-js-green-dark">Image</span>
+                <span className="mt-2 flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-js-green/55 bg-[#fffaf0]/70 p-4 text-center text-js-text-light">
+                  {impactPreviewUrl ? (
+                    <img src={impactPreviewUrl} alt="Selected impact preview" className="max-h-64 w-full rounded-lg object-cover" />
+                  ) : (
+                    <>
+                      <CloudUpload size={38} className="mb-2 text-js-green" />
+                      Select an image of your earthen nest
+                    </>
+                  )}
+                </span>
+                <input type="file" accept="image/*" className="sr-only" onChange={handleImpactImageSelect} />
+              </label>
+
+              <label className="mt-4 block">
+                <span className="text-sm font-bold text-js-green-dark">Caption</span>
+                <input
+                  value={caption}
+                  onChange={(event) => setCaption(event.target.value)}
+                  className="mt-2 w-full rounded-lg border border-js-gold/35 bg-[#fffaf0] px-3 py-2 text-js-text outline-none focus:border-js-green"
+                  placeholder="My earthen nest is ready"
+                  required
+                />
+              </label>
+
+              <label className="mt-4 block">
+                <span className="text-sm font-bold text-js-green-dark">Description</span>
+                <textarea
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  className="mt-2 min-h-28 w-full resize-none rounded-lg border border-js-gold/35 bg-[#fffaf0] px-3 py-2 text-js-text outline-none focus:border-js-green"
+                  placeholder="Tell the community what you made and where you placed it."
+                  required
+                />
+              </label>
+
+              {submitMessage ? (
+                <p className={submitStatus === "error" ? "mt-3 text-sm font-semibold text-js-orange" : "mt-3 text-sm font-semibold text-js-green"}>
+                  {submitMessage}
+                </p>
+              ) : null}
+
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setImpactModalOpen(false)}
+                  className="h-11 rounded-lg border border-js-gold/35 bg-[#fffaf0] px-5 font-bold text-js-text"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitStatus === "submitting"}
+                  className="h-11 rounded-lg bg-js-green px-5 font-bold text-[#fff8df] disabled:cursor-wait disabled:bg-js-green-light"
+                >
+                  {submitStatus === "submitting" ? "Uploading..." : "Submit Impact"}
+                </button>
+              </div>
+            </form>
+          </OrnamentalCard>
+        </div>
+      ) : null}
     </div>
   );
 }
