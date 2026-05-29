@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Bell,
   Bird,
   Droplet,
   Fish,
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import OrnamentalCard from "@/components/OrnamentalCard";
+import NotificationBell from "@/components/NotificationBell";
 import { missions } from "@/lib/missions";
 
 const categories = [
@@ -238,9 +238,11 @@ export default function LivingTraditionsMissionsPage({ searchParams }: LivingTra
             <OrnamentalCard accent="leaf" ornament="quiet" innerClassName="p-4">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-js-green text-[#fff8df]">
-                    <Bell size={24} />
-                  </span>
+                  <NotificationBell
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-js-green text-[#fff8df]"
+                    iconSize={24}
+                    showBadge={false}
+                  />
                   <h2 className="font-display text-[22px] font-bold text-js-green-dark">Alerts</h2>
                 </div>
                 <Link href="#alerts" className="text-sm font-medium text-js-green">

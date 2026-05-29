@@ -1,6 +1,6 @@
 import Image from "next/image";
+import Link from "next/link";
 import {
-  Bell,
   BookOpen,
   CalendarDays,
   ChevronRight,
@@ -13,6 +13,7 @@ import {
   Share2,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import NotificationBell from "@/components/NotificationBell";
 
 const tabs = [
   { label: "All Stories", icon: BookOpen, active: true },
@@ -93,17 +94,16 @@ export default function CommunityPage() {
             <h1 className="font-display text-[25px] font-bold leading-none text-js-text md:hidden">Community</h1>
 
             <div className="absolute right-4 top-1/2 hidden -translate-y-1/2 items-center gap-6 text-js-green-dark md:flex">
-              <button type="button" aria-label="Notifications" className="relative">
-                <Bell size={29} strokeWidth={1.7} />
-                <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-js-green ring-2 ring-[#fbf5e8]" />
-              </button>
-              <Image
-                src="/images/community/avatar-sita.jpg"
-                alt="Profile"
-                width={46}
-                height={46}
-                className="rounded-full border border-js-gold/40 bg-[#f4e5c5]"
-              />
+              <NotificationBell className="relative flex items-center justify-center" iconSize={29} />
+              <Link href="/profile" aria-label="Profile">
+                <Image
+                  src="/images/community/avatar-sita.jpg"
+                  alt="Profile"
+                  width={46}
+                  height={46}
+                  className="rounded-full border border-js-gold/40 bg-[#f4e5c5]"
+                />
+              </Link>
             </div>
           </div>
 

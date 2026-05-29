@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Bell, ChevronDown } from "lucide-react";
+import { MapPin, ChevronDown } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 
 const locations = [
   "Patna, Bihar",
@@ -14,7 +15,6 @@ const locations = [
 export default function Header() {
   const [location, setLocation] = useState("Patna, Bihar");
   const [showDropdown, setShowDropdown] = useState(false);
-  const notifCount = 3;
 
   return (
     <header
@@ -141,29 +141,18 @@ export default function Header() {
         </div>
 
         {/* Notification bell */}
-        <button
+        <NotificationBell
           className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105"
           style={{
             background: "rgba(255,255,255,0.8)",
             border: "1.5px solid rgba(200,149,42,0.35)",
             boxShadow: "0 1px 4px rgba(139,94,60,0.1)",
           }}
-        >
-          <Bell size={18} style={{ color: "var(--text)" }} strokeWidth={1.8} />
-          {notifCount > 0 && (
-            <span
-              className="notif-badge absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white font-bold"
-              style={{
-                background: "var(--orange)",
-                fontSize: "10px",
-                border: "2px solid var(--cream)",
-                fontFamily: "Lora, serif",
-              }}
-            >
-              {notifCount}
-            </span>
-          )}
-        </button>
+          iconSize={18}
+          iconClassName="text-js-text"
+          badgeContent={3}
+          badgeClassName="notif-badge absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white font-bold bg-js-orange border-2 border-js-cream text-[10px]"
+        />
       </div>
     </header>
   );

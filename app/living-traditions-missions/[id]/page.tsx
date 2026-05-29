@@ -6,7 +6,6 @@ import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
-  Bell,
   CalendarDays,
   Check,
   CheckCircle2,
@@ -24,6 +23,7 @@ import {
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import OrnamentalCard from "@/components/OrnamentalCard";
+import NotificationBell from "@/components/NotificationBell";
 import { missions } from "@/lib/missions";
 import type { CreateImpactSubmissionResponse } from "@/lib/impact-submissions";
 
@@ -365,7 +365,11 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
             <OrnamentalCard accent="leaf" ornament="quiet" innerClassName="p-4">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Bell size={28} className="text-js-green" />
+                  <NotificationBell
+                    className="relative flex items-center justify-center text-js-green"
+                    iconSize={28}
+                    showBadge={false}
+                  />
                   <h2 className="font-display text-[22px] font-bold text-js-green-dark">Alerts</h2>
                 </div>
                 <a href="#detail-alerts" className="text-sm font-medium text-js-green">View all</a>
