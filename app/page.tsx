@@ -8,17 +8,17 @@ import SeasonalTip from "@/components/SeasonalTip";
 
 export default function Home() {
   return (
-    <div className="h-auto min-h-screen overflow-x-hidden md:h-screen md:overflow-hidden folk-pattern-bg">
+    <div className="h-auto min-h-screen overflow-x-hidden min-[1400px]:h-screen min-[1400px]:overflow-hidden folk-pattern-bg">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main layout */}
-      <div className="md:ml-[196px] flex flex-col min-h-screen md:h-screen">
+      <div className="md:ml-[196px] flex flex-col min-h-screen min-[1400px]:h-screen">
         {/* Header */}
         <Header />
 
         {/* Page content */}
-        <div className="flex flex-1 min-h-0 gap-3 p-4 md:p-4 xl:p-5 pb-24 md:pb-4 xl:pb-5">
+        <div className="flex flex-1 flex-col min-h-0 gap-3 p-4 md:p-4 xl:p-5 pb-24 md:pb-5 min-[1400px]:flex-row min-[1400px]:pb-5">
           {/* Center column */}
           <main className="flex-1 flex min-h-0 flex-col gap-3 min-w-0">
             {/* Hero */}
@@ -32,14 +32,14 @@ export default function Home() {
           </main>
 
           {/* Right panel – desktop only */}
-          <aside className="hidden lg:flex min-h-0 flex-col gap-3 w-72 xl:w-80 flex-shrink-0">
+          <aside className="hidden min-[1400px]:flex min-h-0 flex-col gap-3 w-72 xl:w-80 flex-shrink-0">
             <AlertsPanel />
             <RecentActivity />
           </aside>
         </div>
 
-        {/* Mobile: Observations + Activity below main content */}
-        <div className="lg:hidden px-4 pb-24 flex flex-col gap-4">
+        {/* Medium/mobile: Observations + Activity below main content */}
+        <div className="min-[1400px]:hidden px-4 md:px-5 pb-24 flex flex-col gap-4">
           <AlertsPanel />
           <RecentActivity />
         </div>

@@ -8,6 +8,8 @@ type OrnamentalCardProps = {
   ornament?: "top-bottom" | "corners" | "quiet" | "none";
   as?: "div" | "button" | "section" | "aside";
   style?: React.CSSProperties;
+  onClick?: () => void;
+  type?: "button" | "submit" | "reset";
 };
 
 const accentStyles = {
@@ -25,9 +27,13 @@ export default function OrnamentalCard({
   ornament = "top-bottom",
   as: Component = "div",
   style,
+  onClick,
+  type,
 }: OrnamentalCardProps) {
   return (
     <Component
+      onClick={onClick}
+      type={Component === "button" ? type ?? "button" : undefined}
       className={clsx(
         "ornamental-card relative overflow-hidden rounded-xl border bg-js-cream/70 shadow-card",
         className

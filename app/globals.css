@@ -245,12 +245,6 @@ h4,
 }
 
 @media (min-width: 769px) {
-  html,
-  body {
-    height: 100%;
-    overflow: hidden;
-  }
-
   .mobile-bottom-nav {
     display: none;
   }

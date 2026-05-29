@@ -241,6 +241,11 @@ export default function FeatureGrid() {
         <OrnamentalCard
           as="button"
           key={feat.id}
+          onClick={() => {
+            if (feat.id === "share") {
+              window.location.href = "/share-traditional-knowledge";
+            }
+          }}
           className="feature-card h-[104px] text-center cursor-pointer"
           innerClassName="flex h-full flex-col items-center justify-center gap-1.5 px-4 py-3"
           accent={featureAccent(feat.accent)}
