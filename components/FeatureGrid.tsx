@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import OrnamentalCard from "@/components/OrnamentalCard";
 
 type FeatureCard = {
@@ -234,7 +235,20 @@ const features: FeatureCard[] = [
   },
 ];
 
+const featureLinks: Record<string, string> = {
+  share: "/share-traditional-knowledge",
+  missions: "/living-traditions-missions",
+  biodiversity: "/report-biodiversity",
+  map: "/map",
+  alerts: "/living-traditions-missions#alerts",
+  report: "/report-issue",
+  calendar: "/eco-calendar",
+  suggestions: "/suggestions-policies",
+};
+
 export default function FeatureGrid() {
+  const router = useRouter();
+
   return (
     <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-4">
       {features.map((feat) => (
@@ -242,9 +256,7 @@ export default function FeatureGrid() {
           as="button"
           key={feat.id}
           onClick={() => {
-            if (feat.id === "share") {
-              window.location.href = "/share-traditional-knowledge";
-            }
+            router.push(featureLinks[feat.id]);
           }}
           className="feature-card h-[104px] text-center cursor-pointer"
           innerClassName="flex h-full flex-col items-center justify-center gap-1.5 px-4 py-3"

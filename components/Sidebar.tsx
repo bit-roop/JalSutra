@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Home, Map, Users, User, Plus } from "lucide-react";
 import clsx from "clsx";
 
 const navItems = [
-  { id: "home", label: "Home", icon: Home },
-  { id: "map", label: "Map", icon: Map },
-  { id: "community", label: "Community", icon: Users },
-  { id: "profile", label: "Profile", icon: User },
+  { id: "home", label: "Home", icon: Home, href: "/" },
+  { id: "map", label: "Map", icon: Map, href: "/map" },
+  { id: "community", label: "Community", icon: Users, href: "/community" },
+  { id: "profile", label: "Profile", icon: User, href: "/profile" },
 ];
 
 export default function Sidebar() {
-  const [active, setActive] = useState("home");
+  const pathname = usePathname();
 
   return (
     <>
@@ -102,15 +103,18 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="relative px-4 mt-4 space-y-3">
-          {navItems.map(({ id, label, icon: Icon }) => (
-            <button
+          {navItems.map(({ id, label, icon: Icon, href }) => {
+            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+            return (
+            <Link
               key={id}
-              onClick={() => setActive(id)}
+              href={href}
               className={clsx(
                 "nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[15px] font-medium transition-all"
               )}
               style={
-                active === id
+                active
                   ? {
                       color: "#fff6df",
                       background: "linear-gradient(90deg, rgba(247,235,188,0.23), rgba(247,235,188,0.12))",
@@ -124,8 +128,9 @@ export default function Sidebar() {
             >
               <Icon size={18} strokeWidth={1.8} />
               <span style={{ fontFamily: "Lora, serif" }}>{label}</span>
-            </button>
-          ))}
+            </Link>
+            );
+          })}
         </nav>
 
         {/* Separator line */}
@@ -139,7 +144,8 @@ export default function Sidebar() {
 
         {/* Add/Create button */}
         <div className="relative px-4 pb-3">
-          <button
+          <Link
+            href="/share-traditional-knowledge"
             className="w-full flex flex-col items-center gap-2 py-1 transition-all"
           >
             <div
@@ -155,7 +161,7 @@ export default function Sidebar() {
             <span className="text-[#f4e6bc] text-sm" style={{ fontFamily: "Lora, serif" }}>
               Add / Create
             </span>
-          </button>
+          </Link>
         </div>
 
       </aside>
@@ -171,16 +177,19 @@ export default function Sidebar() {
           boxShadow: "0 -6px 18px rgba(80,58,35,0.12)",
         }}
       >
-        {navItems.map(({ id, label, icon: Icon }) => (
-          <button
+        {navItems.map(({ id, label, icon: Icon, href }) => {
+          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+          return (
+          <Link
             key={id}
-            onClick={() => setActive(id)}
+            href={href}
             className={clsx(
               "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-all",
-              active === id ? "text-js-text" : "text-js-text-light"
+              active ? "text-js-text" : "text-js-text-light"
             )}
             style={
-              active === id
+              active
                 ? {
                     background: "rgba(248,240,221,0.7)",
                     border: "1px solid rgba(168,125,54,0.36)",
@@ -192,9 +201,11 @@ export default function Sidebar() {
             <span className="text-xs" style={{ fontFamily: "Lora, serif" }}>
               {label}
             </span>
-          </button>
-        ))}
-        <button
+          </Link>
+          );
+        })}
+        <Link
+          href="/share-traditional-knowledge"
           className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-js-text-light"
         >
           <div
@@ -206,7 +217,7 @@ export default function Sidebar() {
           <span className="text-xs text-js-text-light" style={{ fontFamily: "Lora, serif" }}>
             Create
           </span>
-        </button>
+        </Link>
       </nav>
     </>
   );
