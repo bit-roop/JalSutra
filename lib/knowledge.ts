@@ -1,7 +1,7 @@
 export type KnowledgeUploadType = "voice" | "text" | "photo" | "video";
 
 export type KnowledgeUpload = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   type: KnowledgeUploadType;

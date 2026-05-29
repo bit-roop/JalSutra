@@ -10,11 +10,13 @@ import {
   Loader2,
   Mic,
   Play,
+  RotateCcw,
   Sprout,
+  Trash2,
   Upload,
   UserRound,
   Video,
-  Volume2,
+  X,
 } from "lucide-react";
 import clsx from "clsx";
 import Sidebar from "@/components/Sidebar";
@@ -25,8 +27,12 @@ type FormState = {
   title: string;
   description: string;
   language: string;
-  file: File | null;
+  files: File[];
+  durationSeconds: number[];
 };
+
+type FormByType = Record<KnowledgeUploadType, FormState>;
+type PreviewByType = Record<KnowledgeUploadType, string[]>;
 
 const tabs: Array<{ id: KnowledgeUploadType; label: string; icon: React.ElementType }> = [
   { id: "voice", label: "Voice", icon: Mic },
@@ -62,22 +68,47 @@ const initialForm: FormState = {
   title: "",
   description: "",
   language: "Bhojpuri",
-  file: null,
+  files: [],
+  durationSeconds: [],
 };
+
+const initialForms: FormByType = {
+  voice: { ...initialForm },
+  text: { ...initialForm },
+  photo: { ...initialForm },
+  video: { ...initialForm },
+};
+
+const initialPreviews: PreviewByType = {
+  voice: [],
+  text: [],
+  photo: [],
+  video: [],
+};
+
+const maxMediaItems = 3;
+const audioMimeType = "audio/webm;codecs=opus";
+const videoMimeType = "video/webm;codecs=vp8,opus";
 
 export default function KnowledgeUploadPage() {
   const [activeTab, setActiveTab] = useState<KnowledgeUploadType>("voice");
-  const [form, setForm] = useState<FormState>(initialForm);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [forms, setForms] = useState<FormByType>(initialForms);
+  const [previewUrls, setPreviewUrls] = useState<PreviewByType>(initialPreviews);
   const [recentUploads, setRecentUploads] = useState<KnowledgeUpload[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
+  const [recordingTab, setRecordingTab] = useState<KnowledgeUploadType | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recordingSecondsRef = useRef(0);
+  const previewUrlsRef = useRef<PreviewByType>(initialPreviews);
+  const activeForm = forms[activeTab];
+  const activePreviewUrl = previewUrls[activeTab];
 
   useEffect(() => {
     void fetchRecentUploads();
@@ -94,28 +125,53 @@ export default function KnowledgeUploadPage() {
   }, [isRecording]);
 
   useEffect(() => {
+    recordingSecondsRef.current = recordingSeconds;
+  }, [recordingSeconds]);
+
+  useEffect(() => {
+    previewUrlsRef.current = previewUrls;
+  }, [previewUrls]);
+
+  useEffect(() => {
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      Object.values(previewUrlsRef.current).forEach((urls) => {
+        urls.forEach((url) => URL.revokeObjectURL(url));
+      });
+      streamRef.current?.getTracks().forEach((track) => track.stop());
     };
-  }, [previewUrl]);
+  }, []);
 
   const needsFile = activeTab !== "text";
   const isValid = useMemo(() => {
     return (
-      form.title.trim().length > 0 &&
-      form.description.trim().length > 0 &&
-      (!needsFile || form.file !== null)
+      activeForm.title.trim().length > 0 &&
+      activeForm.description.trim().length > 0 &&
+      (!needsFile || activeForm.files.length > 0)
     );
-  }, [form.description, form.file, form.title, needsFile]);
+  }, [activeForm.description, activeForm.files.length, activeForm.title, needsFile]);
 
   function resetForTab(tab: KnowledgeUploadType) {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setActiveTab(tab);
-    setForm({ ...initialForm, language: form.language });
-    setPreviewUrl(null);
     setError(null);
     setSuccess(null);
     stopActiveRecorder();
+  }
+
+  function updateActiveForm(update: Partial<FormState>) {
+    setForms((current) => ({
+      ...current,
+      [activeTab]: { ...current[activeTab], ...update },
+    }));
+  }
+
+  function resetActiveForm() {
+    const language = activeForm.language;
+    clearPreview(activeTab);
+    setForms((current) => ({
+      ...current,
+      [activeTab]: { ...initialForm, language },
+    }));
+    setRecordingSeconds(0);
   }
 
   async function fetchRecentUploads() {
@@ -131,36 +187,92 @@ export default function KnowledgeUploadPage() {
     }
   }
 
-  async function startRecording() {
+  async function startVoiceRecording() {
     setError(null);
     setSuccess(null);
 
     try {
+      if (forms.voice.files.length >= maxMediaItems) {
+        setError("You can add up to 3 voice recordings.");
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(
+        stream,
+        MediaRecorder.isTypeSupported(audioMimeType) ? { mimeType: audioMimeType } : undefined
+      );
       chunksRef.current = [];
       setRecordingSeconds(0);
+      streamRef.current = stream;
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunksRef.current.push(event.data);
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const durationSeconds = recordingSecondsRef.current;
+        const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType || "audio/webm" });
         const file = new File([blob], `traditional-knowledge-${Date.now()}.webm`, {
-          type: "audio/webm",
+          type: blob.type,
         });
-        const url = URL.createObjectURL(blob);
-        setForm((current) => ({ ...current, file }));
-        setPreviewUrl(url);
+        addRecordedMedia("voice", file, durationSeconds);
         stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        setRecorder(null);
+        setRecordingTab(null);
       };
 
       mediaRecorder.start();
       setRecorder(mediaRecorder);
+      setRecordingTab("voice");
       setIsRecording(true);
     } catch {
       setError("Microphone access was not available. Please allow recording and try again.");
+    }
+  }
+
+  async function startVideoRecording() {
+    setError(null);
+    setSuccess(null);
+
+    try {
+      if (forms.video.files.length >= maxMediaItems) {
+        setError("You can add up to 3 video uploads.");
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const mediaRecorder = new MediaRecorder(
+        stream,
+        MediaRecorder.isTypeSupported(videoMimeType) ? { mimeType: videoMimeType } : undefined
+      );
+      chunksRef.current = [];
+      setRecordingSeconds(0);
+      streamRef.current = stream;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType || "video/webm" });
+        const file = new File([blob], `traditional-knowledge-video-${Date.now()}.webm`, {
+          type: blob.type,
+        });
+        addRecordedMedia("video", file, recordingSecondsRef.current);
+        stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        setRecorder(null);
+        setRecordingTab(null);
+      };
+
+      mediaRecorder.start();
+      setRecorder(mediaRecorder);
+      setRecordingTab("video");
+      setIsRecording(true);
+    } catch {
+      setError("Camera access was not available. Please allow video recording and try again.");
     }
   }
 
@@ -172,15 +284,85 @@ export default function KnowledgeUploadPage() {
   function stopActiveRecorder() {
     if (recorder && recorder.state !== "inactive") recorder.stop();
     setRecorder(null);
+    setRecordingTab(null);
     setIsRecording(false);
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
   }
 
-  function handleFile(file: File | null) {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setForm((current) => ({ ...current, file }));
-    setPreviewUrl(file ? URL.createObjectURL(file) : null);
+  function clearPreview(tab: KnowledgeUploadType) {
+    setPreviewUrls((current) => {
+      current[tab].forEach((url) => URL.revokeObjectURL(url));
+      return { ...current, [tab]: [] };
+    });
+  }
+
+  function handleFiles(tab: KnowledgeUploadType, files: File[]) {
+    if (files.length === 0) return;
+    const availableSlots = maxMediaItems - forms[tab].files.length;
+    if (availableSlots <= 0) {
+      setError(`You can add up to ${maxMediaItems} ${tab} uploads.`);
+      return;
+    }
+
+    const selectedFiles = files.slice(0, availableSlots);
+    setForms((current) => ({
+      ...current,
+      [tab]: {
+        ...current[tab],
+        files: [...current[tab].files, ...selectedFiles],
+        durationSeconds: [...current[tab].durationSeconds, ...selectedFiles.map(() => 0)],
+      },
+    }));
+    setPreviewUrls((current) => ({
+      ...current,
+      [tab]: [...current[tab], ...selectedFiles.map((file) => URL.createObjectURL(file))],
+    }));
     setError(null);
     setSuccess(null);
+  }
+
+  function addRecordedMedia(tab: KnowledgeUploadType, file: File, durationSeconds: number) {
+    const url = URL.createObjectURL(file);
+    setForms((current) => ({
+      ...current,
+      [tab]: {
+        ...current[tab],
+        files: [...current[tab].files, file].slice(0, maxMediaItems),
+        durationSeconds: [...current[tab].durationSeconds, durationSeconds].slice(0, maxMediaItems),
+      },
+    }));
+    setPreviewUrls((current) => ({
+      ...current,
+      [tab]: [...current[tab], url].slice(0, maxMediaItems),
+    }));
+  }
+
+  function removeMedia(tab: KnowledgeUploadType, index: number) {
+    setPreviewUrls((current) => {
+      const url = current[tab][index];
+      if (url) URL.revokeObjectURL(url);
+      return {
+        ...current,
+        [tab]: current[tab].filter((_, itemIndex) => itemIndex !== index),
+      };
+    });
+    setForms((current) => ({
+      ...current,
+      [tab]: {
+        ...current[tab],
+        files: current[tab].files.filter((_, itemIndex) => itemIndex !== index),
+        durationSeconds: current[tab].durationSeconds.filter((_, itemIndex) => itemIndex !== index),
+      },
+    }));
+  }
+
+  function clearMedia(tab: KnowledgeUploadType) {
+    clearPreview(tab);
+    setForms((current) => ({
+      ...current,
+      [tab]: { ...current[tab], files: [], durationSeconds: [] },
+    }));
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -199,20 +381,27 @@ export default function KnowledgeUploadPage() {
 
     setIsSubmitting(true);
     try {
-      const body = new FormData();
-      body.append("upload_type", activeTab);
-      body.append("title", form.title.trim());
-      body.append("description", form.description.trim());
-      body.append("language", form.language);
-      if (form.file) body.append("file", form.file);
+      const filesToUpload = activeTab === "text" ? [null] : activeForm.files;
 
-      const response = await fetch("/api/knowledge-upload", { method: "POST", body });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "Upload failed");
+      for (const file of filesToUpload) {
+        const body = new FormData();
+        body.append("upload_type", activeTab);
+        body.append("title", activeForm.title.trim());
+        body.append("description", activeForm.description.trim());
+        body.append("language", activeForm.language);
+        if (file) body.append("file", file);
 
-      setSuccess("Traditional knowledge saved successfully.");
-      setForm({ ...initialForm, language: form.language });
-      handleFile(null);
+        const response = await fetch("/api/knowledge-upload", { method: "POST", body });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error ?? "Upload failed");
+      }
+
+      setSuccess(
+        filesToUpload.length > 1
+          ? `${filesToUpload.length} traditional knowledge uploads saved successfully.`
+          : "Traditional knowledge saved successfully."
+      );
+      resetActiveForm();
       await fetchRecentUploads();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Upload failed");
@@ -290,25 +479,33 @@ export default function KnowledgeUploadPage() {
 
                 <UploadMode
                   activeTab={activeTab}
-                  previewUrl={previewUrl}
-                  isRecording={isRecording}
-                  recordingSeconds={recordingSeconds}
-                  onStartRecording={startRecording}
+                  previewUrls={activePreviewUrl}
+                  isRecording={isRecording && recordingTab === activeTab}
+                  recordingSeconds={
+                    isRecording && recordingTab === activeTab
+                      ? recordingSeconds
+                      : activeForm.durationSeconds[activeForm.durationSeconds.length - 1] ?? 0
+                  }
+                  durationSeconds={activeForm.durationSeconds}
+                  onStartVoiceRecording={startVoiceRecording}
+                  onStartVideoRecording={startVideoRecording}
                   onStopRecording={stopRecording}
-                  onFile={handleFile}
+                  onFiles={handleFiles}
+                  onRemoveMedia={removeMedia}
+                  onClearMedia={clearMedia}
                 />
 
                 <div className="mt-5 grid gap-4">
                   <div className="grid gap-4 md:grid-cols-2">
                     <input
-                      value={form.title}
-                      onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                      value={activeForm.title}
+                      onChange={(event) => updateActiveForm({ title: event.target.value })}
                       placeholder="Title"
                       className="rounded-xl border border-js-brown/20 bg-js-cream/70 px-4 py-3 text-sm text-js-text outline-none focus:border-js-green/50"
                     />
                     <select
-                      value={form.language}
-                      onChange={(event) => setForm((current) => ({ ...current, language: event.target.value }))}
+                      value={activeForm.language}
+                      onChange={(event) => updateActiveForm({ language: event.target.value })}
                       className="rounded-xl border border-js-brown/20 bg-js-cream/70 px-4 py-3 text-sm text-js-text outline-none focus:border-js-green/50"
                     >
                       {languages.map((language) => (
@@ -319,8 +516,8 @@ export default function KnowledgeUploadPage() {
                     </select>
                   </div>
                   <textarea
-                    value={form.description}
-                    onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                    value={activeForm.description}
+                    onChange={(event) => updateActiveForm({ description: event.target.value })}
                     placeholder="Describe the knowledge, source, season, location, or ritual context."
                     rows={activeTab === "text" ? 5 : 3}
                     className="resize-none rounded-xl border border-js-brown/20 bg-js-cream/70 px-4 py-3 text-sm leading-relaxed text-js-text outline-none focus:border-js-green/50"
@@ -363,21 +560,31 @@ export default function KnowledgeUploadPage() {
 
 function UploadMode({
   activeTab,
-  previewUrl,
+  previewUrls,
   isRecording,
   recordingSeconds,
-  onStartRecording,
+  durationSeconds,
+  onStartVoiceRecording,
+  onStartVideoRecording,
   onStopRecording,
-  onFile,
+  onFiles,
+  onRemoveMedia,
+  onClearMedia,
 }: {
   activeTab: KnowledgeUploadType;
-  previewUrl: string | null;
+  previewUrls: string[];
   isRecording: boolean;
   recordingSeconds: number;
-  onStartRecording: () => void;
+  durationSeconds: number[];
+  onStartVoiceRecording: () => void;
+  onStartVideoRecording: () => void;
   onStopRecording: () => void;
-  onFile: (file: File | null) => void;
+  onFiles: (tab: KnowledgeUploadType, files: File[]) => void;
+  onRemoveMedia: (tab: KnowledgeUploadType, index: number) => void;
+  onClearMedia: (tab: KnowledgeUploadType) => void;
 }) {
+  const canAddMore = previewUrls.length < maxMediaItems;
+
   if (activeTab === "voice") {
     return (
       <div className="mt-5 text-center">
@@ -385,7 +592,7 @@ function UploadMode({
           <Waveform />
           <button
             type="button"
-            onClick={isRecording ? onStopRecording : onStartRecording}
+            onClick={isRecording ? onStopRecording : onStartVoiceRecording}
             className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-[10px] border-js-green/15 bg-js-green text-white shadow-card"
             aria-label={isRecording ? "Stop recording" : "Start recording"}
           >
@@ -395,12 +602,52 @@ function UploadMode({
         </div>
         <p className="mt-2 text-lg font-semibold text-js-text">{formatTime(recordingSeconds)}</p>
         <p className="text-sm text-js-text-light">
-          {isRecording ? "Tap to stop recording" : "Tap to start recording"}
+          {isRecording
+            ? "Tap to stop recording"
+            : previewUrls.length > 0
+              ? `${previewUrls.length} of ${maxMediaItems} recordings ready`
+              : "Tap to start recording"}
         </p>
-        {previewUrl && (
-          <audio controls className="mx-auto mt-4 w-full max-w-xl">
-            <source src={previewUrl} type="audio/webm" />
-          </audio>
+        {previewUrls.length > 0 && (
+          <div className="mx-auto mt-4 grid max-w-xl gap-3">
+            {previewUrls.map((previewUrl, index) => (
+              <div
+                key={previewUrl}
+                className="rounded-xl border border-js-brown/15 bg-js-cream/70 p-3 text-left"
+              >
+                <div className="mb-2 flex items-center justify-between gap-3 text-sm font-semibold text-js-text">
+                  <span>Recording {index + 1} · {formatTime(durationSeconds[index] ?? 0)}</span>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveMedia("voice", index)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-js-brown/20 px-3 py-1"
+                  >
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </div>
+                <audio src={previewUrl} controls className="w-full" preload="metadata" />
+              </div>
+            ))}
+          </div>
+        )}
+        {previewUrls.length > 0 && canAddMore && (
+          <div className="mt-3 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={onStartVoiceRecording}
+              className="inline-flex items-center gap-2 rounded-xl border border-js-brown/20 bg-js-cream/70 px-4 py-2 text-sm font-semibold text-js-text"
+            >
+              <RotateCcw size={16} />
+              Add another recording
+            </button>
+            <AudioUploadButton onFiles={onFiles} />
+          </div>
+        )}
+        {previewUrls.length === 0 && canAddMore && (
+          <div className="mt-3 flex flex-wrap justify-center gap-3">
+            <AudioUploadButton onFiles={onFiles} />
+          </div>
         )}
       </div>
     );
@@ -409,23 +656,94 @@ function UploadMode({
   if (activeTab === "photo" || activeTab === "video") {
     return (
       <div className="mt-5 rounded-2xl border border-js-brown/15 bg-js-cream/45 p-4 text-center">
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-js-gold/35 bg-js-gold/10 px-4 py-2 text-sm font-semibold text-js-text">
-          <Upload size={16} />
-          {activeTab === "photo" ? "Choose image" : "Choose video"}
-          <input
-            type="file"
-            accept={activeTab === "photo" ? "image/*" : "video/*"}
-            className="hidden"
-            onChange={(event) => onFile(event.target.files?.[0] ?? null)}
-          />
-        </label>
-        {previewUrl && (
-          <div className="mt-4 overflow-hidden rounded-xl border border-js-brown/15 bg-js-cream">
+        {canAddMore && (
+          <div className="flex flex-wrap justify-center gap-3">
             {activeTab === "photo" ? (
-              <img src={previewUrl} alt="" className="h-64 w-full object-cover" />
+              <>
+                <MediaPickerButton
+                  tab="photo"
+                  label="Click photo"
+                  icon={Camera}
+                  accept="image/*"
+                  capture="environment"
+                  onFiles={onFiles}
+                />
+                <MediaPickerButton
+                  tab="photo"
+                  label="Choose images"
+                  icon={Upload}
+                  accept="image/*"
+                  onFiles={onFiles}
+                />
+              </>
             ) : (
-              <video src={previewUrl} controls className="h-64 w-full bg-black object-contain" />
+              <>
+                <button
+                  type="button"
+                  onClick={isRecording ? onStopRecording : onStartVideoRecording}
+                  className="inline-flex items-center gap-2 rounded-xl border border-js-gold/35 bg-js-gold/10 px-4 py-2 text-sm font-semibold text-js-text"
+                >
+                  <Video size={16} />
+                  {isRecording ? "Stop video" : "Record video"}
+                </button>
+                <MediaPickerButton
+                  tab="video"
+                  label="Choose videos"
+                  icon={Upload}
+                  accept="video/*"
+                  onFiles={onFiles}
+                />
+              </>
             )}
+          </div>
+        )}
+        <p className="mt-2 text-xs text-js-text-light">
+          {isRecording ? `Recording ${formatTime(recordingSeconds)}` : `${previewUrls.length} of ${maxMediaItems} selected`}
+        </p>
+        {previewUrls.length > 0 && (
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {previewUrls.map((previewUrl, index) => (
+              <div key={previewUrl} className="overflow-hidden rounded-xl border border-js-brown/15 bg-js-cream">
+                {activeTab === "photo" ? (
+                  <img src={previewUrl} alt="" className="h-44 w-full object-cover" />
+                ) : (
+                  <video src={previewUrl} controls className="h-44 w-full bg-black object-contain" />
+                )}
+                <div className="flex justify-center border-t border-js-brown/10 bg-js-cream/75 p-2">
+                  <button
+                    type="button"
+                    onClick={() => onRemoveMedia(activeTab, index)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-js-brown/20 bg-js-cream/70 px-3 py-2 text-sm font-semibold text-js-text"
+                  >
+                    <X size={16} />
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {previewUrls.length > 0 && canAddMore && (
+          <div className="mt-3">
+            <MediaPickerButton
+              tab={activeTab}
+              label="Add more"
+              icon={Upload}
+              accept={activeTab === "photo" ? "image/*" : "video/*"}
+              onFiles={onFiles}
+            />
+          </div>
+        )}
+        {previewUrls.length > 0 && (
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => onClearMedia(activeTab)}
+              className="inline-flex items-center gap-2 rounded-xl border border-js-brown/20 bg-js-cream/70 px-4 py-2 text-sm font-semibold text-js-text"
+            >
+              <X size={16} />
+              Remove all
+            </button>
           </div>
         )}
       </div>
@@ -433,6 +751,63 @@ function UploadMode({
   }
 
   return null;
+}
+
+function AudioUploadButton({
+  onFiles,
+}: {
+  onFiles: (tab: KnowledgeUploadType, files: File[]) => void;
+}) {
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-js-gold/35 bg-js-gold/10 px-4 py-2 text-sm font-semibold text-js-text">
+      <Upload size={16} />
+      Upload audio
+      <input
+        type="file"
+        multiple
+        accept="audio/*"
+        className="hidden"
+        onChange={(event) => {
+          onFiles("voice", Array.from(event.target.files ?? []));
+          event.currentTarget.value = "";
+        }}
+      />
+    </label>
+  );
+}
+
+function MediaPickerButton({
+  tab,
+  label,
+  icon: Icon,
+  accept,
+  capture,
+  onFiles,
+}: {
+  tab: KnowledgeUploadType;
+  label: string;
+  icon: React.ElementType;
+  accept: string;
+  capture?: "environment" | "user";
+  onFiles: (tab: KnowledgeUploadType, files: File[]) => void;
+}) {
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-js-gold/35 bg-js-gold/10 px-4 py-2 text-sm font-semibold text-js-text">
+      <Icon size={16} />
+      {label}
+      <input
+        type="file"
+        multiple={!capture}
+        accept={accept}
+        capture={capture}
+        className="hidden"
+        onChange={(event) => {
+          onFiles(tab, Array.from(event.target.files ?? []));
+          event.currentTarget.value = "";
+        }}
+      />
+    </label>
+  );
 }
 
 function Waveform() {
@@ -536,8 +911,30 @@ function WisdomBanner() {
 }
 
 function UploadThumb({ upload }: { upload: KnowledgeUpload }) {
-  if (upload.thumbnail_url) {
+  if (upload.type === "photo" && (upload.thumbnail_url || upload.file_url)) {
+    return (
+      <img
+        src={upload.thumbnail_url ?? upload.file_url ?? ""}
+        alt=""
+        className="h-14 w-14 rounded-lg object-cover"
+      />
+    );
+  }
+
+  if (upload.type === "video" && upload.thumbnail_url) {
     return <img src={upload.thumbnail_url} alt="" className="h-14 w-14 rounded-lg object-cover" />;
+  }
+
+  if (upload.type === "video" && upload.file_url) {
+    return (
+      <video
+        src={upload.file_url}
+        muted
+        playsInline
+        preload="metadata"
+        className="h-14 w-14 rounded-lg bg-black object-cover"
+      />
+    );
   }
   const Icon = upload.type === "voice" ? Mic : upload.type === "text" ? FileText : UserRound;
   return (
