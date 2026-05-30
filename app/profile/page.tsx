@@ -34,7 +34,7 @@ const contributions = [
   { label: "My Missions", icon: ClipboardList, href: "/living-traditions-missions" },
   { label: "My Knowledge Entries", icon: BookOpen, href: "/share-traditional-knowledge" },
   { label: "My Wisdom Reels", icon: PlayCircle, href: "/community?tab=reels" },
-  { label: "Saved Places", icon: Bookmark, href: "/map" },
+  { label: "My Report", icon: Bookmark, href: "/profile/report" },
   { label: "My Certificates", icon: ScrollText, href: "#achievements" },
 ];
 

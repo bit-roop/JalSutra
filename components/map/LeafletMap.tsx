@@ -24,26 +24,44 @@ const markerIcons: Record<Spot["category"], typeof Waves> = {
   sacred_grove: Trees,
 };
 const gangaRiverPath: [number, number][] = [
-  [27.46, 84.08], [27.31, 84.28], [27.14, 84.43], [26.97, 84.62],
-  [26.82, 84.86], [26.66, 85.04], [26.49, 85.26], [26.34, 85.48],
-  [26.16, 85.69], [26.03, 85.89], [25.89, 86.07], [25.78, 86.28],
-  [25.66, 86.45], [25.56, 86.67], [25.43, 86.84], [25.31, 87.03],
-  [25.22, 87.24], [25.18, 87.43], [25.08, 87.62], [24.98, 87.82],
+  [25.57, 83.88], [25.59, 84.06], [25.55, 84.24], [25.58, 84.43],
+  [25.54, 84.62], [25.59, 84.81], [25.57, 84.99], [25.62, 85.17],
+  [25.57, 85.35], [25.53, 85.53], [25.56, 85.72], [25.51, 85.91],
+  [25.46, 86.10], [25.43, 86.29], [25.40, 86.48], [25.35, 86.67],
+  [25.31, 86.86], [25.27, 87.04], [25.24, 87.23], [25.27, 87.42],
+  [25.21, 87.61], [25.16, 87.80], [25.08, 87.98],
 ];
 const gandakRiverPath: [number, number][] = [
-  [27.58, 84.02], [27.37, 84.17], [27.18, 84.35], [26.98, 84.51],
-  [26.77, 84.69], [26.52, 84.84], [26.25, 84.96], [25.98, 85.04],
-  [25.76, 85.10], [25.64, 85.14],
+  [27.62, 84.04], [27.49, 84.13], [27.36, 84.11], [27.23, 84.20],
+  [27.08, 84.26], [26.95, 84.35], [26.82, 84.40], [26.68, 84.51],
+  [26.54, 84.56], [26.41, 84.67], [26.27, 84.74], [26.14, 84.83],
+  [26.02, 84.90], [25.91, 84.98], [25.78, 85.05], [25.62, 85.17],
 ];
 const kosiRiverPath: [number, number][] = [
-  [27.44, 87.32], [27.20, 87.26], [26.98, 87.18], [26.74, 87.12],
-  [26.52, 87.08], [26.28, 87.06], [26.05, 87.10], [25.86, 87.18],
-  [25.68, 87.25], [25.52, 87.34],
+  [27.49, 87.30], [27.35, 87.23], [27.20, 87.27], [27.06, 87.18],
+  [26.91, 87.21], [26.77, 87.12], [26.63, 87.16], [26.49, 87.09],
+  [26.35, 87.14], [26.21, 87.09], [26.08, 87.16], [25.94, 87.13],
+  [25.81, 87.20], [25.68, 87.24], [25.54, 87.30], [25.39, 87.36],
 ];
 const damodarRiverPath: [number, number][] = [
-  [23.95, 84.92], [23.82, 85.15], [23.72, 85.38], [23.64, 85.62],
-  [23.56, 85.87], [23.48, 86.10], [23.40, 86.34], [23.34, 86.62],
-  [23.27, 86.88], [23.20, 87.12],
+  [23.96, 84.91], [23.89, 85.05], [23.84, 85.20], [23.77, 85.35],
+  [23.72, 85.51], [23.66, 85.67], [23.61, 85.83], [23.55, 85.98],
+  [23.49, 86.14], [23.43, 86.29], [23.39, 86.45], [23.34, 86.62],
+  [23.28, 86.79], [23.23, 86.96], [23.18, 87.13],
+];
+const gangaWaterRibbon: [number, number][] = [
+  [25.66, 83.88], [25.68, 84.24], [25.65, 84.62], [25.69, 85.00],
+  [25.72, 85.18], [25.64, 85.54], [25.65, 85.91], [25.56, 86.29],
+  [25.49, 86.67], [25.40, 87.05], [25.36, 87.43], [25.25, 87.81],
+  [25.17, 88.00], [24.99, 87.96], [25.07, 87.59], [25.14, 87.22],
+  [25.18, 86.84], [25.25, 86.46], [25.33, 86.08], [25.42, 85.70],
+  [25.47, 85.34], [25.52, 85.15], [25.45, 84.80], [25.44, 84.42],
+  [25.48, 84.05],
+];
+const waterBodyRegions: [number, number][][] = [
+  [[25.72, 86.04], [25.78, 86.14], [25.75, 86.25], [25.66, 86.29], [25.59, 86.21], [25.61, 86.10]],
+  [[27.51, 84.00], [27.58, 84.10], [27.55, 84.24], [27.45, 84.31], [27.36, 84.24], [27.39, 84.09]],
+  [[25.17, 87.68], [25.26, 87.76], [25.24, 87.90], [25.12, 87.96], [25.02, 87.87], [25.06, 87.74]],
 ];
 const floodplainRegions: [number, number][][] = [
   [[27.56, 83.92], [27.60, 84.24], [27.35, 84.42], [27.10, 84.36], [27.00, 84.10], [27.20, 83.92]],
@@ -104,12 +122,12 @@ function makeAtlasLabelIcon(label: string, className: string) {
   });
 }
 
-function DecorativeRiver({ positions }: { positions: [number, number][] }) {
+function DecorativeRiver({ positions, main = false }: { positions: [number, number][]; main?: boolean }) {
   return (
     <>
-      <Polyline positions={positions} interactive={false} pathOptions={{ color: "#b1e2ec", weight: 10, opacity: 0.38, lineCap: "round", lineJoin: "round" }} />
-      <Polyline positions={positions} interactive={false} pathOptions={{ color: "#69bad4", weight: 5, opacity: 0.7, lineCap: "round", lineJoin: "round" }} />
-      <Polyline positions={positions} interactive={false} pathOptions={{ color: "#2f91b7", weight: 2, opacity: 0.88, lineCap: "round", lineJoin: "round" }} />
+      <Polyline positions={positions} interactive={false} pathOptions={{ color: "#b8e4ef", weight: main ? 13 : 8, opacity: 0.46, lineCap: "round", lineJoin: "round" }} />
+      <Polyline positions={positions} interactive={false} pathOptions={{ color: "#65b7d4", weight: main ? 7 : 4, opacity: 0.78, lineCap: "round", lineJoin: "round" }} />
+      <Polyline positions={positions} interactive={false} pathOptions={{ color: "#2e8db5", weight: main ? 2.5 : 1.5, opacity: 0.9, lineCap: "round", lineJoin: "round" }} />
     </>
   );
 }
@@ -205,7 +223,20 @@ export default function LeafletMap({
           pathOptions={{ color: "#74b8a4", weight: 1, opacity: 0.22, fillColor: "#a9dbc3", fillOpacity: 0.18 }}
         />
       ))}
-      <DecorativeRiver positions={gangaRiverPath} />
+      <Polygon
+        positions={gangaWaterRibbon}
+        interactive={false}
+        pathOptions={{ color: "#86c7dd", weight: 1, opacity: 0.45, fillColor: "#9ed9e9", fillOpacity: 0.32 }}
+      />
+      {waterBodyRegions.map((positions, index) => (
+        <Polygon
+          key={`water-body-${index}`}
+          positions={positions}
+          interactive={false}
+          pathOptions={{ color: "#62afcb", weight: 1.5, opacity: 0.58, fillColor: "#8fcfe2", fillOpacity: 0.42 }}
+        />
+      ))}
+      <DecorativeRiver positions={gangaRiverPath} main />
       <DecorativeRiver positions={gandakRiverPath} />
       <DecorativeRiver positions={kosiRiverPath} />
       <DecorativeRiver positions={damodarRiverPath} />

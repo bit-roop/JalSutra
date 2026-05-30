@@ -2,11 +2,11 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bird, CalendarDays, CheckCircle2, ChevronDown, Clock3, Fish, Layers3, Leaf,
   LocateFixed, MapPin, Search, ShieldCheck, Sprout, Users, Waves, Plus,
-  SearchCheck, Flag, Bookmark, Share2, Ban, Trees,
+  SearchCheck, Flag, Bookmark, Share2, Ban, Trees, PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 
 export type SpotCategory = "wetland" | "bird_zone" | "fish_zone" | "no_fishing_zone" | "sacred_grove";
@@ -42,10 +42,16 @@ export default function MapPageClient() {
   const [status, setStatus] = useState<SpotStatus | "all">("all");
   const [visibleLayers, setVisibleLayers] = useState<Set<SpotCategory>>(new Set(categories.map(({ id }) => id)));
   const [showLayers, setShowLayers] = useState(false);
+  const [showMapLegend, setShowMapLegend] = useState(false);
+  const mapAreaRef = useRef<HTMLDivElement>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [locationMessage, setLocationMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    setShowMapLegend(window.matchMedia("(min-width: 768px)").matches);
+  }, []);
 
   useEffect(() => {
     fetch("/api/spots", { cache: "no-store" })
@@ -104,9 +110,9 @@ export default function MapPageClient() {
 
       <section className="grid min-h-0 grid-cols-1 xl:grid-cols-[minmax(0,69fr)_minmax(390px,31fr)]">
         <div className="flex min-h-0 flex-col">
-          <div className="relative h-[460px] overflow-hidden border-b border-[#bda77b]/50 md:h-[520px] xl:h-[calc(100vh-450px)] xl:min-h-[410px]">
+          <div ref={mapAreaRef} className="relative isolate h-[460px] overflow-hidden border-b border-[#bda77b]/50 md:h-[520px] xl:h-[calc(100vh-450px)] xl:min-h-[410px]">
             <LeafletMap spots={matchingSpots} selectedSpot={selectedSpot} userPosition={userPosition} onSelect={setSelectedSpot} />
-            <MapLegend />
+            <MapLegend expanded={showMapLegend} setExpanded={setShowMapLegend} mapAreaRef={mapAreaRef} />
             <button onClick={locateMe} title="Locate Me" className="absolute bottom-4 left-4 z-[900] flex items-center gap-2 rounded-xl border border-[#bda77b] bg-[#fffaf0] px-3 py-2 text-sm font-semibold text-[#294f2d] shadow-lg">
               <LocateFixed size={18} /> Locate Me
             </button>
@@ -141,12 +147,51 @@ function SpotsPanel({ spots, selectedId, status, setStatus, onSelect, loading, e
       <span className="min-w-0 flex-1"><strong className="block truncate font-display text-[15px] leading-5 text-[#2f241a]">{spot.name}</strong><span className="block truncate text-[11px] leading-4 text-[#65513d]">{spot.location}</span><span className="block truncate text-[10px] leading-4 text-[#7c6a56]">{spot.created_by}</span><StatusBadge status={spot.status} compact /></span>
     </button>)}</div>
     {!loading && !error && spots.length === 0 && <p className="rounded-lg border border-[#d9c7a3] bg-white/50 p-4 text-sm text-[#65513d]">No spots match these filters.</p>}
-    <div className="mt-auto border-t border-[#d9c7a3]/80 pt-2"><Image src="/images/map/map-bird-art.png" alt="" width={310} height={116} className="mx-auto max-h-24 w-full object-contain opacity-95" /></div>
+    <div className="mt-auto h-36 overflow-hidden border-t border-[#d9c7a3]/80 pt-2"><Image src="/images/map/map-bird-art.png" alt="" width={520} height={170} className="h-full w-full object-cover object-center opacity-95" /></div>
   </aside>;
 }
 
-function MapLegend() {
-  return <section className="absolute left-4 top-4 z-[900] hidden w-48 rounded-xl border border-[#c9b78e] bg-[#fffaf0]/95 p-2.5 shadow-lg md:block">
+function MapLegend({ expanded, setExpanded, mapAreaRef }: { expanded: boolean; setExpanded: (expanded: boolean) => void; mapAreaRef: React.RefObject<HTMLDivElement> }) {
+  const panelRef = useRef<HTMLElement>(null);
+  const [position, setPosition] = useState({ x: 16, y: 16 });
+  const dragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number; x: number; y: number } | null>(null);
+  const positionStyle = { transform: `translate(${position.x}px, ${position.y}px)` };
+
+  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    const panel = panelRef.current;
+    const mapArea = mapAreaRef.current;
+    if (!panel || !mapArea) return;
+    event.stopPropagation();
+    const panelRect = panel.getBoundingClientRect();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = { pointerId: event.pointerId, offsetX: event.clientX - panelRect.left, offsetY: event.clientY - panelRect.top, x: position.x, y: position.y };
+  }
+
+  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    const panel = panelRef.current;
+    const mapArea = mapAreaRef.current;
+    if (!drag || drag.pointerId !== event.pointerId || !panel || !mapArea) return;
+    event.stopPropagation();
+    const mapRect = mapArea.getBoundingClientRect();
+    drag.x = Math.max(0, Math.min(event.clientX - mapRect.left - drag.offsetX, mapRect.width - panel.offsetWidth));
+    drag.y = Math.max(0, Math.min(event.clientY - mapRect.top - drag.offsetY, mapRect.height - panel.offsetHeight));
+    setPosition({ x: drag.x, y: drag.y });
+  }
+
+  function handlePointerUp(event: React.PointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    event.stopPropagation();
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    setPosition({ x: drag.x, y: drag.y });
+    dragRef.current = null;
+  }
+
+  if (!expanded) return <button onClick={() => setExpanded(true)} title="Show Categories" style={positionStyle} className="absolute left-0 top-0 z-[800] flex items-center justify-center rounded-xl border border-[#c9b78e] bg-[#fffaf0]/95 p-2.5 text-[#294f2d] shadow-lg"><PanelLeftOpen size={18} /></button>;
+  return <section ref={panelRef} style={positionStyle} className="absolute left-0 top-0 z-[800] max-h-full w-48 overflow-y-auto rounded-xl border border-[#c9b78e] bg-[#fffaf0]/95 p-2.5 shadow-lg">
+    <div onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp} className="absolute inset-x-0 top-0 h-10 touch-none cursor-move" />
+    <button onClick={() => setExpanded(false)} title="Hide Categories" className="absolute right-2 top-2 z-10 text-[#294f2d]"><PanelLeftClose size={16} /></button>
     {categories.map(({ id, label, icon: Icon, color }) => <div key={id} className="flex items-center gap-2 py-1.5 text-xs text-[#4f4032]"><span className="flex h-6 w-6 items-center justify-center rounded-full text-white" style={{ background: color }}><Icon size={14} /></span><span>{label}{id === "wetland" || id === "bird_zone" || id === "fish_zone" || id === "no_fishing_zone" || id === "sacred_grove" ? "s" : ""}</span></div>)}
     <div className="mt-1 border-t border-[#dfd0b6] pt-2 text-center text-[11px] font-semibold text-[#294f2d]">Show All</div>
   </section>;

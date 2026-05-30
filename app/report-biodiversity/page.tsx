@@ -1,13 +1,15 @@
-import PlaceholderPage from "@/components/PlaceholderPage";
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
+import ReportIssueForm from "@/components/report-issue/ReportIssueForm";
 
 export default function ReportBiodiversityPage() {
   return (
-    <PlaceholderPage
-      eyebrow="Observation"
-      title="Report Biodiversity"
-      description="This linked page will support biodiversity sightings and reports."
-      primaryHref="/living-traditions-missions"
-      primaryLabel="View Missions"
-    />
+    <div className="min-h-screen overflow-x-hidden folk-pattern-bg">
+      <Sidebar />
+      <div className="md:ml-[196px] flex min-h-screen flex-col">
+        <Header />
+        <ReportIssueForm />
+      </div>
+    </div>
   );
 }
