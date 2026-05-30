@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AlertTriangle, LocateFixed, MapPin, MoreHorizontal, Search } from "lucide-react";
+import { AlertTriangle, CheckCircle2, LocateFixed, MapPin, MoreHorizontal, Search, Sprout, Users } from "lucide-react";
 import { useIssueDetails } from "./IssueDetailsContext";
 
 const LocationMap = dynamic(() => import("./LocationMap"), { ssr: false });
@@ -21,9 +21,9 @@ const alerts = [
   ["Illegal Fishing Activity", "Darbhanga, Bihar", "2 days ago", "/images/reports/issue-illegal-fishing-icon.jpg"],
 ];
 const reports = [
-  ["Water Pollution", "", "Under Review", "/images/reports/issue-recent-water-pollution.png"],
-  ["Waste Dumping", "", "Resolved", "/images/reports/issue-recent-waste-dumping.png"],
-  ["Forest Damage", "", "In Progress", "/images/reports/issue-recent-forest-damage.png"],
+  ["Water Pollution", "Kosi River, Bihar", "Under Review", "/images/reports/issue-recent-water-pollution.png"],
+  ["Waste Dumping", "Patna, Bihar", "Resolved", "/images/reports/issue-recent-waste-dumping.png"],
+  ["Forest Damage", "Madhubani, Bihar", "In Progress", "/images/reports/issue-recent-forest-damage.png"],
 ];
 const card = "rounded-xl border border-js-gold/25 bg-[#fffaf0]/90 shadow-card";
 
@@ -86,10 +86,11 @@ export default function IssueDetailsPage() {
           {errors.length > 0 && <p className="mt-4 text-sm text-[#a84730]">{errors.join(". ")}.</p>}
           <div className="mt-5 flex justify-end"><button type="button" onClick={next} className="rounded-lg bg-js-green px-10 py-3 font-bold text-[#fff8df]">Next</button></div>
         </section>
-        <aside className="grid content-start gap-4"><SideCard title="Alerts" rows={alerts} /><SideCard title="Recent Reports" rows={reports} /></aside>
+        <aside className="grid content-start gap-4"><SideCard title="Alerts" rows={alerts} /><SideCard title="Recent Reports" rows={reports} reports /><StatusUpdates /></aside>
       </div>
     </main>
   );
 }
 
-function SideCard({ title, rows }: { title: string; rows: string[][] }) { return <section className={`${card} p-4`}><h2 className="font-display text-xl font-bold text-js-green-dark">{title}</h2><div className="mt-2">{rows.map(([name, detail, meta, image]) => <article key={name} className="flex gap-3 border-b border-js-gold/15 py-3 last:border-0"><Image src={image} alt="" width={48} height={48} className="h-12 w-12 rounded-md object-cover" /><div><p className="text-xs font-bold text-js-text">{name}</p><p className="mt-1 text-xs text-js-text-light">{detail}</p><p className="mt-1 text-xs text-js-green">{meta}</p></div></article>)}</div></section>; }
+function SideCard({ title, rows, reports = false }: { title: string; rows: string[][]; reports?: boolean }) { return <section className={`${card} p-4`}><div className="flex items-center justify-between gap-3"><h2 className="font-display text-xl font-bold text-js-green-dark">{title}</h2><span className="text-xs font-bold text-js-green">View All</span></div><div className="mt-2">{rows.map(([name, detail, meta, image]) => <article key={name} className="flex gap-3 border-b border-js-gold/15 py-3 last:border-0"><Image src={image} alt="" width={48} height={48} className="h-12 w-12 rounded-md object-cover" /><div className="min-w-0 flex-1"><p className="text-xs font-bold text-js-text">{name}</p><p className="mt-1 text-xs text-js-text-light">{detail}</p>{reports ? <span className={`mt-2 inline-flex rounded-md border px-2 py-1 text-[10px] font-bold ${meta === "Resolved" ? "border-js-green/30 bg-[#eef0d9] text-js-green" : meta === "In Progress" ? "border-[#607f86]/35 bg-[#e6f3f2] text-js-blue-dark" : "border-js-gold/35 bg-[#f6ecd3] text-js-gold"}`}>{meta}</span> : <p className="mt-1 text-xs text-js-green">{meta}</p>}</div></article>)}</div></section>; }
+function StatusUpdates() { const updates = [[CheckCircle2, "Issues Resolved This Month", "128", "text-js-green"], [Users, "Active Community Members", "2,356", "text-js-blue-dark"], [Sprout, "Trees Planted (This Month)", "4,782", "text-js-green"]]; return <section className={`${card} p-4`}><div className="flex items-center justify-between gap-3"><h2 className="font-display text-xl font-bold text-js-green-dark">Status Updates</h2><span className="text-xs font-bold text-js-green">View All</span></div><div className="mt-2">{updates.map(([Icon, label, value, tone]) => <div key={label as string} className="flex items-center gap-2 border-b border-js-gold/15 py-3 last:border-0"><Icon size={19} className={tone as string} /><span className="flex-1 text-xs text-js-text">{label as string}</span><strong className={tone as string}>{value as string}</strong></div>)}</div></section>; }
