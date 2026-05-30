@@ -259,3 +259,107 @@ h4,
     rgba(200, 149, 42, 0.06) 100%
   );
 }
+
+/* Map page */
+.map-toolbar {
+  background:
+    linear-gradient(rgba(248, 241, 227, 0.96), rgba(243, 234, 216, 0.96)),
+    url('/assets/textures/paper-texture.png');
+  border-color: rgba(168, 125, 54, 0.28);
+  box-shadow: 0 3px 10px rgba(88, 64, 39, 0.08);
+}
+
+.toolbar-button {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(168, 125, 54, 0.38);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 8px 12px;
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(88, 64, 39, 0.06);
+}
+
+.map-pin {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #fffaf0;
+  border-radius: 999px;
+  background: var(--pin);
+  color: white;
+  font-size: 19px;
+  line-height: 1;
+  transform: none;
+  box-shadow: 0 3px 8px rgba(47, 36, 26, 0.35);
+  transition: transform 160ms ease;
+}
+.map-pin span { transform: none; }
+.map-pin-selected {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 4px rgba(255, 250, 240, 0.7), 0 5px 12px rgba(47, 36, 26, 0.42);
+}
+.user-location-marker {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(47, 131, 169, 0.22);
+  box-shadow: 0 0 0 6px rgba(47, 131, 169, 0.13);
+}
+.user-location-marker span {
+  width: 13px;
+  height: 13px;
+  border: 2px solid white;
+  border-radius: 999px;
+  background: #2f83a9;
+}
+
+.atlas-header-art { width: 190px; height: 52px; justify-content: flex-end; }
+.atlas-wave {
+  position: absolute;
+  right: 38px;
+  width: 146px;
+  height: 20px;
+  border-top: 3px solid var(--gold);
+  border-radius: 50%;
+}
+.atlas-wave-one { top: 11px; }
+.atlas-wave-two { top: 19px; border-color: var(--blue); }
+.atlas-wave-three { top: 27px; border-color: var(--orange); }
+.atlas-art-medallion {
+  z-index: 1;
+  display: flex;
+  width: 46px;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #fff8e9;
+  border-radius: 999px;
+  background: var(--green-dark);
+  color: #f5edd8;
+  box-shadow: 0 0 0 2px var(--gold);
+}
+.atlas-details {
+  background-image:
+    radial-gradient(circle at 85% 15%, rgba(168, 125, 54, 0.08), transparent 24%),
+    linear-gradient(rgba(255, 250, 240, 0.94), rgba(248, 241, 227, 0.94)),
+    url('/assets/textures/paper-texture.png');
+}
+.atlas-tag {
+  border: 1px solid rgba(168, 125, 54, 0.25);
+  border-radius: 999px;
+  background: rgba(230, 239, 212, 0.85);
+  padding: 4px 9px;
+  color: #445b38;
+}
+.workflow-card {
+  background-image:
+    linear-gradient(rgba(251, 246, 233, 0.94), rgba(251, 246, 233, 0.94)),
+    url('/assets/textures/paper-texture.png');
+}

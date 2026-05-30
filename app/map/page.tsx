@@ -1,11 +1,15 @@
-import PlaceholderPage from "@/components/PlaceholderPage";
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
+import MapPageClient from "@/components/map/MapPageClient";
 
 export default function MapPage() {
   return (
-    <PlaceholderPage
-      eyebrow="Explore"
-      title="Map"
-      description="The river map experience is being prepared. Use this page as the linked destination from JalSutra navigation."
-    />
+    <div className="min-h-screen folk-pattern-bg">
+      <Sidebar />
+      <div className="md:ml-[196px] flex min-h-screen flex-col">
+        <Header />
+        <MapPageClient />
+      </div>
+    </div>
   );
 }
