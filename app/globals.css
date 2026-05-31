@@ -226,6 +226,35 @@ h4,
   background-color: rgba(200, 149, 42, 0.08);
 }
 
+/* Submit idea page */
+.idea-input {
+  width: 100%;
+  border: 1px solid #d9c6a7;
+  border-radius: 0.5rem;
+  background: #fffdf7;
+  padding: 0.625rem 0.75rem;
+  color: var(--text);
+  font-size: 0.875rem;
+  outline: none;
+}
+.idea-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(68, 91, 56, 0.12);
+}
+.idea-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid #d9c6a7;
+  border-radius: 0.5rem;
+  background: #fffdf7;
+  padding: 0.625rem 0.85rem;
+  color: var(--green);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 /* Activity item hover */
 .activity-item {
   transition: background-color 0.15s ease;
