@@ -54,3 +54,20 @@ CREATE TABLE IF NOT EXISTS report_files (
 
 CREATE INDEX IF NOT EXISTS reports_created_at_idx ON reports (created_at DESC);
 CREATE INDEX IF NOT EXISTS report_files_report_id_idx ON report_files (report_id);
+
+CREATE TABLE IF NOT EXISTS ideas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  problem_statement TEXT NOT NULL,
+  suggestion TEXT NOT NULL,
+  impact TEXT NOT NULL,
+  location TEXT,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
+  image_urls TEXT[],
+  document_urls TEXT[],
+  status TEXT NOT NULL DEFAULT 'Under Review',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ideas_created_at_idx ON ideas (created_at DESC);

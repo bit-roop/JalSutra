@@ -20,7 +20,10 @@ export default function HeroBanner() {
 
       <div className="relative z-20 flex w-[34%] min-w-[300px] flex-col justify-center px-7 py-5">
         <h2 className="font-display text-[40px] font-bold leading-none text-js-green-dark">
-          Namaste, Arjun!
+          Namaste, 
+        </h2>
+        <h2 className="font-display text-[40px] font-bold leading-none text-js-green-dark">
+          Sita Devi!
         </h2>
 
         <div className="mt-3 inline-flex w-fit items-center gap-2 rounded-full border border-js-green/35 bg-js-green/10 px-3 py-1 text-sm font-medium text-js-green-dark">

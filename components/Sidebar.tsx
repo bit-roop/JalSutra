@@ -145,7 +145,7 @@ export default function Sidebar() {
         {/* Add/Create button */}
         <div className="relative px-4 pb-3">
           <Link
-            href="/submit-idea"
+            href="/report-biodiversity"
             className="w-full flex flex-col items-center gap-2 py-1 transition-all"
           >
             <div
@@ -205,7 +205,7 @@ export default function Sidebar() {
           );
         })}
         <Link
-          href="/submit-idea"
+          href="/report-biodiversity"
           className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-js-text-light"
         >
           <div

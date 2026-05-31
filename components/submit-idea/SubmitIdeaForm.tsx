@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import {
   Camera,
@@ -17,6 +16,8 @@ import {
   Users,
   X,
 } from "lucide-react";
+import MySubmissions from "./MySubmissions";
+import { saveIdeaSubmission } from "./ideaStorage";
 
 const LocationMap = dynamic(() => import("@/components/report-issue/LocationMap"), { ssr: false });
 
@@ -31,7 +32,6 @@ const tips = [
 ];
 
 export default function SubmitIdeaForm() {
-  const router = useRouter();
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
@@ -105,20 +105,15 @@ export default function SubmitIdeaForm() {
     );
   }
 
-  function submitIdea(event: FormEvent<HTMLFormElement>) {
+  async function submitIdea(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
-    const payload = {
-      title: data.get("title"),
-      problemStatement: data.get("problemStatement"),
-      suggestion: data.get("suggestion"),
-      expectedImpact: data.get("expectedImpact"),
-      location: { name: locationName, latitude, longitude },
-      uploads: files.map(({ file }) => ({ name: file.name, type: file.type, size: file.size })),
-      confirmedOriginalAndPublicGood: data.get("confirmation") === "on",
-    };
-    console.log("Submit idea payload:", payload);
+    data.set("location", locationName);
+    if (latitude !== null) data.set("latitude", String(latitude));
+    if (longitude !== null) data.set("longitude", String(longitude));
+    files.forEach(({ file }) => data.append("files", file));
+    await saveIdeaSubmission(data);
     form.reset();
     setFiles([]);
     setLatitude(null);
@@ -127,7 +122,7 @@ export default function SubmitIdeaForm() {
     setLocationQuery("");
     setLocationMessage("");
     setShowToast(true);
-    window.setTimeout(() => router.push("/"), 900);
+    window.setTimeout(() => setShowToast(false), 2400);
   }
 
   return (
@@ -205,17 +200,20 @@ export default function SubmitIdeaForm() {
             <button type="submit" className="w-full rounded-lg bg-js-green px-5 py-3 font-semibold text-[#fff8df]">Submit Idea</button>
           </form>
 
-          <aside className="overflow-hidden rounded-2xl border border-[#dbc9aa] bg-[#fffaf0]/90 shadow-[0_5px_16px_rgba(91,63,35,0.10)]">
-            <div className="p-4">
-              <h2 className="font-display text-xl font-bold text-js-green-dark">Helpful Tips</h2>
-              <div className="mt-2 h-px bg-[#e3d3b8]" />
-              <h3 className="mt-4 font-display text-lg font-bold text-js-green-dark">How to write a good policy idea</h3>
-              <div className="mt-2 divide-y divide-[#e3d3b8]">
-                {tips.map(({ icon: Icon, text }) => <div key={text} className="flex gap-3 py-3 text-xs leading-5 text-js-text"><Icon size={20} className="mt-0.5 shrink-0 text-js-green" /><p>{text}</p></div>)}
+          <div>
+            <aside className="overflow-hidden rounded-2xl border border-[#dbc9aa] bg-[#fffaf0]/90 shadow-[0_5px_16px_rgba(91,63,35,0.10)]">
+              <div className="p-4">
+                <h2 className="font-display text-xl font-bold text-js-green-dark">Helpful Tips</h2>
+                <div className="mt-2 h-px bg-[#e3d3b8]" />
+                <h3 className="mt-4 font-display text-lg font-bold text-js-green-dark">How to write a good policy idea</h3>
+                <div className="mt-2 divide-y divide-[#e3d3b8]">
+                  {tips.map(({ icon: Icon, text }) => <div key={text} className="flex gap-3 py-3 text-xs leading-5 text-js-text"><Icon size={20} className="mt-0.5 shrink-0 text-js-green" /><p>{text}</p></div>)}
+                </div>
               </div>
-            </div>
-            <Image src="/images/ideas/idea-tips-community.png" alt="Community discussing ideas" width={600} height={650} className="w-full object-cover" />
-          </aside>
+              <Image src="/images/ideas/idea-tips-community.png" alt="Community discussing ideas" width={600} height={650} className="w-full object-cover" />
+            </aside>
+            <MySubmissions />
+          </div>
         </div>
       </div>
     </main>
